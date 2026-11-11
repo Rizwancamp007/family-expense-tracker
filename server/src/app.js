@@ -1,9 +1,16 @@
 import cors from "cors";
 import express from "express";
 import { createAuthRouter } from "./routes/auth.js";
+import { createExpensesRouter } from "./routes/expenses.js";
+import { createFamiliesRouter } from "./routes/families.js";
+import { createMemoryDb } from "./store/db.js";
 import { createMemoryStore } from "./store/users.js";
 
-export function createApp({ store = createMemoryStore() } = {}) {
+export function createApp({ store, db } = {}) {
+  const data = db || {
+    ...createMemoryDb(),
+    users: store || createMemoryStore(),
+  };
   const app = express();
   app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
   app.use(express.json());
@@ -16,7 +23,9 @@ export function createApp({ store = createMemoryStore() } = {}) {
     res.json({ message: "Family Expense Tracker API" });
   });
 
-  app.use("/api/auth", createAuthRouter(store));
+  app.use("/api/auth", createAuthRouter(data.users));
+  app.use("/api/families", createFamiliesRouter(data));
+  app.use("/api/expenses", createExpensesRouter(data));
 
   // Unknown paths still answer JSON, so the client never gets an HTML
   // error page it can't show.
