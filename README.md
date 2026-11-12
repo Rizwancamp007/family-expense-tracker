@@ -40,3 +40,13 @@ Families: `POST /api/families` to create one (you get an invite code to share), 
 
 Expenses: `POST /api/expenses` and `GET /api/expenses?familyId=...` (filter by category, member, date range, or search the note), plus `GET`, `PUT`, `DELETE /api/expenses/:id`. Members can only change their own expenses; the admin can manage the whole family's. Everything is scoped to the family, so one family never sees another's.
 
+Dashboard: `GET /api/expenses/summary?familyId=...&month=YYYY-MM` returns the month total, this week's spend, the top category, and who spent what. It defaults to the current month, and members only see their own totals.
+
+## Using it
+
+Register, then create a family (or join one with an invite code) — the invite code shows on the dashboard so you can share it. Add expenses from the form, then filter the list by member, category, date range, or search. The dashboard cards show the month total, this week's spend, the top category, and the per-member breakdown, with previous/next month buttons to look back. Members see their own expenses; the admin sees the whole family and can edit or delete any of them.
+
+## Tests
+
+Server: `cd server && npm test`. Client helpers: `cd client && npm test`.
+
