@@ -1,5 +1,22 @@
-import { useState } from "react";
-import { login, register } from "./api.js";
+import { useCallback, useEffect, useState } from "react";
+import {
+  fetchMembers,
+  fetchMyFamilies,
+  login,
+  register,
+} from "./api.js";
+import Dashboard from "./components/Dashboard.jsx";
+import ExpenseForm from "./components/ExpenseForm.jsx";
+import ExpenseList from "./components/ExpenseList.jsx";
+import FamilySetup from "./components/FamilySetup.jsx";
+
+function storedUser() {
+  try {
+    return JSON.parse(localStorage.getItem("expense-user") || "null");
+  } catch {
+    return null;
+  }
+}
 
 export default function App() {
   const [mode, setMode] = useState("login");
@@ -7,15 +24,52 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("member");
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("expense-user") || "null");
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState(storedUser);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [families, setFamilies] = useState(null);
+  const [family, setFamily] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const token =
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem("expense-token")
+      : null;
+
+  const handleSessionExpired = useCallback(() => {
+    localStorage.removeItem("expense-token");
+    localStorage.removeItem("expense-user");
+    setUser(null);
+    setFamilies(null);
+    setFamily(null);
+    setError("Your session expired — please log in again.");
+  }, []);
+
+  const loadFamilies = useCallback(
+    async (selectId) => {
+      try {
+        const mine = await fetchMyFamilies(token);
+        setFamilies(mine);
+        const picked =
+          mine.find((f) => f.id === selectId) || mine[0] || null;
+        setFamily(picked);
+        if (picked) {
+          setMembers(await fetchMembers(picked.id, token));
+        }
+      } catch (err) {
+        if (err.status === 401) handleSessionExpired();
+        else setError(err.message);
+      }
+    },
+    [token, handleSessionExpired]
+  );
+
+  useEffect(() => {
+    if (user && token) loadFamilies();
+  }, [user, token, loadFamilies]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -40,11 +94,32 @@ export default function App() {
     localStorage.removeItem("expense-token");
     localStorage.removeItem("expense-user");
     setUser(null);
+    setFamilies(null);
+    setFamily(null);
+    setMembers([]);
     setEmail("");
     setPassword("");
   }
 
+  async function handleFamilyChange(e) {
+    const picked = families.find((f) => f.id === e.target.value) || null;
+    setFamily(picked);
+    setEditing(null);
+    if (picked) {
+      try {
+        setMembers(await fetchMembers(picked.id, token));
+      } catch (err) {
+        if (err.status === 401) handleSessionExpired();
+        else setError(err.message);
+      }
+    }
+  }
+
   if (user) {
+    const myMembership = family?.members?.find(
+      (m) => String(m.userId) === String(user.id)
+    );
+    const isAdmin = myMembership?.role === "admin";
     return (
       <main>
         <h1>Family Expense Tracker</h1>
@@ -54,10 +129,67 @@ export default function App() {
         <button type="button" onClick={handleLogout}>
           Log out
         </button>
-        <p>
-          Your family dashboard lives here — shared totals, your own spending,
-          budgets, and reports.
-        </p>
+
+        {families === null && <p>Loading your families...</p>}
+        {families !== null && !family && (
+          <FamilySetup
+            token={token}
+            onFamilyReady={(created) => loadFamilies(created.id)}
+          />
+        )}
+        {family && (
+          <>
+            {families.length > 1 && (
+              <div>
+                <label>
+                  Family{" "}
+                  <select value={family.id} onChange={handleFamilyChange}>
+                    {families.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+            <p className="muted">
+              {family.name} · invite code{" "}
+              <strong>{family.inviteCode}</strong>
+              {members.length > 0 &&
+                ` · ${members.map((m) => m.name).join(", ")}`}
+            </p>
+            <Dashboard
+              familyId={family.id}
+              token={token}
+              refreshKey={refreshKey}
+            />
+            <ExpenseForm
+              familyId={family.id}
+              token={token}
+              initial={editing}
+              onSaved={() => {
+                setEditing(null);
+                setRefreshKey((k) => k + 1);
+              }}
+              onCancel={() => setEditing(null)}
+            />
+            <ExpenseList
+              familyId={family.id}
+              token={token}
+              members={members}
+              isAdmin={isAdmin}
+              userId={user.id}
+              onEdit={setEditing}
+              refreshKey={refreshKey}
+            />
+          </>
+        )}
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
       </main>
     );
   }

@@ -2,6 +2,11 @@ import express from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { requireAuth } from "../middleware/auth.js";
 import { CATEGORIES, PAYMENT_METHODS } from "../models/Expense.js";
+import {
+  monthKey,
+  summarizeExpenses,
+  summaryWindow,
+} from "../services/summary.js";
 import { publicExpense } from "../store/expenses.js";
 import { familyMembership, isFamilyAdmin } from "./families.js";
 
@@ -57,7 +62,7 @@ function validateExpense(body, partial = false) {
 
 export function createExpensesRouter(db) {
   const router = express.Router();
-  const { families, expenses } = db;
+  const { families, expenses, users } = db;
 
   // The family the request is about, and proof this user belongs to it.
   async function loadFamily(req, res) {
@@ -150,6 +155,46 @@ export function createExpensesRouter(db) {
         total,
         page,
         limit,
+      });
+    })
+  );
+
+  // Family dashboard totals for one month. Registered before /:id so the
+  // word "summary" isn't read as an expense id. A family month is small,
+  // so one fetch covers the whole window and the totals come from that.
+  router.get(
+    "/summary",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const family = await loadFamily(req, res);
+      if (!family) return;
+      const month = req.query.month || monthKey(new Date());
+      if (!/^\d{4}-\d{2}$/.test(month)) {
+        return res
+          .status(400)
+          .json({ message: "month must look like YYYY-MM" });
+      }
+      const admin = isFamilyAdmin(family, req.user.id);
+      const userId = admin ? undefined : String(req.user.id);
+      const { from, to } = summaryWindow(month);
+      const { items } = await expenses.list({
+        familyId: String(family.id ?? family._id),
+        userId,
+        from,
+        to,
+        page: 1,
+        limit: 10000,
+      });
+      const memberNames = {};
+      for (const expense of items) {
+        const id = String(expense.userId);
+        if (!(id in memberNames)) {
+          const user = await users.findById(id);
+          memberNames[id] = user?.name || "Unknown";
+        }
+      }
+      return res.json({
+        summary: summarizeExpenses(items, { month, memberNames }),
       });
     })
   );
