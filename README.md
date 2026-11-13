@@ -42,9 +42,11 @@ Expenses: `POST /api/expenses` and `GET /api/expenses?familyId=...` (filter by c
 
 Dashboard: `GET /api/expenses/summary?familyId=...&month=YYYY-MM` returns the month total, this week's spend, the top category, and who spent what. It defaults to the current month, and members only see their own totals.
 
+Budgets: `PUT /api/budgets` sets a monthly budget for one category — or `Overall` for the whole family's month — and `GET /api/budgets/status?familyId=...&month=YYYY-MM` shows what was spent against each one, what's left, and whether it's over budget. Only the family admin can set or remove a budget (`DELETE /api/budgets?familyId=...&month=...&category=...`); members see their own spending against the same limits.
+
 ## Using it
 
-Register, then create a family (or join one with an invite code) — the invite code shows on the dashboard so you can share it. Add expenses from the form, then filter the list by member, category, date range, or search. The dashboard cards show the month total, this week's spend, the top category, and the per-member breakdown, with previous/next month buttons to look back. Members see their own expenses; the admin sees the whole family and can edit or delete any of them.
+Register, then create a family (or join one with an invite code) — the invite code shows on the dashboard so you can share it. Add expenses from the form, then filter the list by member, category, date range, or search. The dashboard cards show the month total, this week's spend, the top category, and the per-member breakdown, with previous/next month buttons to look back. Members see their own expenses; the admin sees the whole family and can edit or delete any of them. The admin can set a monthly budget per category, or one overall budget for the family — each one shows a progress bar, what's left, and a warning when it's over budget. Members see their own spending against those same budgets.
 
 ## Tests
 

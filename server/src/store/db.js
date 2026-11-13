@@ -1,4 +1,8 @@
 import {
+  createMemoryBudgetStore,
+  createMongooseBudgetStore,
+} from "./budgets.js";
+import {
   createMemoryExpenseStore,
   createMongooseExpenseStore,
 } from "./expenses.js";
@@ -19,13 +23,15 @@ export function createMemoryDb() {
     users: createMemoryUserStore(),
     families: createMemoryFamilyStore(),
     expenses: createMemoryExpenseStore(),
+    budgets: createMemoryBudgetStore(),
   };
 }
 
-export function createMongooseDb({ User, Family, Expense }) {
+export function createMongooseDb({ User, Family, Expense, Budget }) {
   return {
     users: createMongooseUserStore(User),
     families: createMongooseFamilyStore(Family),
     expenses: createMongooseExpenseStore(Expense),
+    budgets: createMongooseBudgetStore(Budget),
   };
 }
