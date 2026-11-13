@@ -95,3 +95,30 @@ export function fetchSummary(familyId, month, token) {
     token
   ).then((d) => d.summary);
 }
+
+export function fetchBudgetStatus(familyId, month, token) {
+  return request(
+    "GET",
+    `/api/budgets/status?familyId=${familyId}&month=${month}`,
+    undefined,
+    token
+  ).then((d) => d.status);
+}
+
+export function setBudget(familyId, month, category, amount, token) {
+  return request(
+    "PUT",
+    "/api/budgets",
+    { familyId, month, category, amount },
+    token
+  ).then((d) => d.budget);
+}
+
+export function deleteBudget(familyId, month, category, token) {
+  return request(
+    "DELETE",
+    `/api/budgets?familyId=${familyId}&month=${month}&category=${encodeURIComponent(category)}`,
+    undefined,
+    token
+  );
+}

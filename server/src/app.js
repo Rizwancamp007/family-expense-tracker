@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { createAuthRouter } from "./routes/auth.js";
+import { createBudgetsRouter } from "./routes/budgets.js";
 import { createExpensesRouter } from "./routes/expenses.js";
 import { createFamiliesRouter } from "./routes/families.js";
 import { createMemoryDb } from "./store/db.js";
@@ -26,6 +27,7 @@ export function createApp({ store, db } = {}) {
   app.use("/api/auth", createAuthRouter(data.users));
   app.use("/api/families", createFamiliesRouter(data));
   app.use("/api/expenses", createExpensesRouter(data));
+  app.use("/api/budgets", createBudgetsRouter(data));
 
   // Unknown paths still answer JSON, so the client never gets an HTML
   // error page it can't show.

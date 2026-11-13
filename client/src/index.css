@@ -124,6 +124,47 @@ select:focus-visible {
   padding: 0.5rem 0;
 }
 
+/* Budget progress bars: full width on a phone, same grid on wider screens. */
+.budget-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.budget-row {
+  border-top: 1px solid #dadce0;
+  padding: 0.75rem 0;
+}
+
+.budget-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.budget-bar {
+  height: 10px;
+  background: #e8eaed;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.budget-fill {
+  height: 100%;
+  background: #137333;
+  border-radius: 5px;
+}
+
+.budget-fill.over {
+  background: #b3261e;
+}
+
+.over-warning {
+  color: #b3261e;
+  font-weight: 600;
+}
+
 .month-nav {
   display: flex;
   flex-direction: column;
@@ -151,6 +192,12 @@ select:focus-visible {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
+  }
+
+  .budget-head {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
   }
 
   .month-nav {
