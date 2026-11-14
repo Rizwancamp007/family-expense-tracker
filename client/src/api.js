@@ -114,6 +114,44 @@ export function setBudget(familyId, month, category, amount, token) {
   ).then((d) => d.budget);
 }
 
+export function fetchMonthlyReport(familyId, month, token) {
+  return request(
+    "GET",
+    `/api/reports/monthly?familyId=${familyId}&month=${month}`,
+    undefined,
+    token
+  ).then((d) => d.report);
+}
+
+export async function downloadMonthlyCsv(familyId, month, token) {
+  let res;
+  try {
+    res = await fetch(
+      `${API_URL}/api/reports/export?familyId=${familyId}&month=${month}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+  } catch (err) {
+    throw friendlyError(err);
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const error = new Error(data.message || "Download failed");
+    error.status = res.status;
+    throw error;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `expenses-${month}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function deleteBudget(familyId, month, category, token) {
   return request(
     "DELETE",

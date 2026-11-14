@@ -7,6 +7,7 @@ import {
 } from "./api.js";
 import Dashboard from "./components/Dashboard.jsx";
 import Budgets from "./components/Budgets.jsx";
+import Reports from "./components/Reports.jsx";
 import ExpenseForm from "./components/ExpenseForm.jsx";
 import ExpenseList from "./components/ExpenseList.jsx";
 import FamilySetup from "./components/FamilySetup.jsx";
@@ -169,6 +170,11 @@ export default function App() {
               familyId={family.id}
               token={token}
               isAdmin={isAdmin}
+              refreshKey={refreshKey}
+            />
+            <Reports
+              familyId={family.id}
+              token={token}
               refreshKey={refreshKey}
             />
             <ExpenseForm

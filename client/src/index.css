@@ -165,6 +165,29 @@ select:focus-visible {
   font-weight: 600;
 }
 
+/* Report charts: one column on a phone, two side by side on wider screens. */
+.charts {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  margin-top: 1rem;
+}
+
+.chart-card {
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.chart-card h3 {
+  margin-top: 0;
+}
+
+.chart {
+  position: relative;
+  height: 260px;
+}
+
 .month-nav {
   display: flex;
   flex-direction: column;
@@ -198,6 +221,10 @@ select:focus-visible {
     flex-direction: row;
     justify-content: space-between;
     align-items: baseline;
+  }
+
+  .charts {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .month-nav {
