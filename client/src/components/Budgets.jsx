@@ -3,6 +3,7 @@ import { deleteBudget, fetchBudgetStatus, setBudget } from "../api.js";
 import { CATEGORIES } from "../constants.js";
 import { budgetBarWidth, isOverBudget } from "../utils/budgetMath.js";
 import { formatMoney, monthParam, shiftMonth } from "../utils/expenseFilters.js";
+import { isSessionExpired } from "../utils/session.js";
 
 function monthLabel(month) {
   const [year, mon] = month.split("-").map(Number);
@@ -54,7 +55,7 @@ function BudgetRow({ entry, spentLabel, isAdmin, onRemove }) {
   );
 }
 
-export default function Budgets({ familyId, token, isAdmin, refreshKey }) {
+export default function Budgets({ familyId, token, isAdmin, refreshKey, onSessionExpired }) {
   const [month, setMonth] = useState(monthParam(new Date()));
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +74,9 @@ export default function Budgets({ familyId, token, isAdmin, refreshKey }) {
         if (!cancelled) setStatus(s);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message);
+        if (cancelled) return;
+        if (isSessionExpired(err)) onSessionExpired?.();
+        else setError(err.message);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -97,7 +100,8 @@ export default function Budgets({ familyId, token, isAdmin, refreshKey }) {
       setAmount("");
       setStatus(await fetchBudgetStatus(familyId, month, token));
     } catch (err) {
-      setFormError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setFormError(err.message);
     } finally {
       setSaving(false);
     }
@@ -109,7 +113,8 @@ export default function Budgets({ familyId, token, isAdmin, refreshKey }) {
       await deleteBudget(familyId, month, budgetCategory, token);
       setStatus(await fetchBudgetStatus(familyId, month, token));
     } catch (err) {
-      setError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setError(err.message);
     }
   }
 

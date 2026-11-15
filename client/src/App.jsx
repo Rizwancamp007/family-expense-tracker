@@ -11,6 +11,7 @@ import Reports from "./components/Reports.jsx";
 import ExpenseForm from "./components/ExpenseForm.jsx";
 import ExpenseList from "./components/ExpenseList.jsx";
 import FamilySetup from "./components/FamilySetup.jsx";
+import { isSessionExpired } from "./utils/session.js";
 
 function storedUser() {
   try {
@@ -62,7 +63,7 @@ export default function App() {
           setMembers(await fetchMembers(picked.id, token));
         }
       } catch (err) {
-        if (err.status === 401) handleSessionExpired();
+        if (isSessionExpired(err)) handleSessionExpired();
         else setError(err.message);
       }
     },
@@ -111,7 +112,7 @@ export default function App() {
       try {
         setMembers(await fetchMembers(picked.id, token));
       } catch (err) {
-        if (err.status === 401) handleSessionExpired();
+        if (isSessionExpired(err)) handleSessionExpired();
         else setError(err.message);
       }
     }
@@ -124,19 +125,30 @@ export default function App() {
     const isAdmin = myMembership?.role === "admin";
     return (
       <main>
-        <h1>Family Expense Tracker</h1>
-        <p>
-          Signed in as {user.name} ({user.role}).
-        </p>
-        <button type="button" onClick={handleLogout}>
-          Log out
-        </button>
+        <div className="topbar">
+          <div>
+            <h1>Family Expense Tracker</h1>
+            <p className="muted">
+              Signed in as {user.name} ({user.role}).
+            </p>
+          </div>
+          <button type="button" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
+
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
 
         {families === null && <p>Loading your families...</p>}
         {families !== null && !family && (
           <FamilySetup
             token={token}
             onFamilyReady={(created) => loadFamilies(created.id)}
+            onSessionExpired={handleSessionExpired}
           />
         )}
         {family && (
@@ -165,17 +177,20 @@ export default function App() {
               familyId={family.id}
               token={token}
               refreshKey={refreshKey}
+              onSessionExpired={handleSessionExpired}
             />
             <Budgets
               familyId={family.id}
               token={token}
               isAdmin={isAdmin}
               refreshKey={refreshKey}
+              onSessionExpired={handleSessionExpired}
             />
             <Reports
               familyId={family.id}
               token={token}
               refreshKey={refreshKey}
+              onSessionExpired={handleSessionExpired}
             />
             <ExpenseForm
               familyId={family.id}
@@ -186,6 +201,7 @@ export default function App() {
                 setRefreshKey((k) => k + 1);
               }}
               onCancel={() => setEditing(null)}
+              onSessionExpired={handleSessionExpired}
             />
             <ExpenseList
               familyId={family.id}
@@ -195,13 +211,9 @@ export default function App() {
               userId={user.id}
               onEdit={setEditing}
               refreshKey={refreshKey}
+              onSessionExpired={handleSessionExpired}
             />
           </>
-        )}
-        {error && (
-          <p role="alert" className="error">
-            {error}
-          </p>
         )}
       </main>
     );

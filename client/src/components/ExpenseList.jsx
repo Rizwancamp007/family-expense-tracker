@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { deleteExpense, listExpenses } from "../api.js";
 import { CATEGORIES } from "../constants.js";
 import { dateInputValue, formatMoney } from "../utils/expenseFilters.js";
+import { isSessionExpired } from "../utils/session.js";
 
 const PAGE_SIZE = 20;
 
@@ -13,6 +14,7 @@ export default function ExpenseList({
   userId,
   onEdit,
   refreshKey,
+  onSessionExpired,
 }) {
   const [filters, setFilters] = useState({
     memberId: "",
@@ -39,7 +41,8 @@ export default function ExpenseList({
       setExpenses(data.expenses);
       setTotal(data.total);
     } catch (err) {
-      setError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +70,8 @@ export default function ExpenseList({
       await deleteExpense(expense.id, token);
       load();
     } catch (err) {
-      setError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setError(err.message);
     }
   }
 

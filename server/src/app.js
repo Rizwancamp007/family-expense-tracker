@@ -38,6 +38,16 @@ export function createApp({ store, db } = {}) {
   });
 
   app.use((err, req, res, next) => {
+    // A body that isn't valid JSON comes from express.json() as a
+    // SyntaxError — that's a bad request, not a server crash, so say so.
+    if (err.type === "entity.parse.failed") {
+      return res.status(400).json({
+        message: "That request wasn't valid — please try again",
+      });
+    }
+    if (err.type === "entity.too.large") {
+      return res.status(413).json({ message: "That request was too large" });
+    }
     console.error(err);
     res.status(500).json({ message: "Something went wrong — please try again" });
   });

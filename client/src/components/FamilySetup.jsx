@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createFamily, joinFamily } from "../api.js";
+import { isSessionExpired } from "../utils/session.js";
 
-export default function FamilySetup({ token, onFamilyReady }) {
+export default function FamilySetup({ token, onFamilyReady, onSessionExpired }) {
   const [familyName, setFamilyName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [createdCode, setCreatedCode] = useState("");
@@ -18,7 +19,8 @@ export default function FamilySetup({ token, onFamilyReady }) {
       setCreatedCode(data.family.inviteCode);
       onFamilyReady(data.family);
     } catch (err) {
-      setError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setError(err.message);
     } finally {
       setBusy(false);
     }
@@ -32,7 +34,8 @@ export default function FamilySetup({ token, onFamilyReady }) {
       const data = await joinFamily(inviteCode.trim(), token);
       onFamilyReady(data.family);
     } catch (err) {
-      setError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setError(err.message);
     } finally {
       setBusy(false);
     }

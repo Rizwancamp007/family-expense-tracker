@@ -21,6 +21,7 @@ import {
   memberChartData,
   trendChartData,
 } from "../utils/reportCharts.js";
+import { isSessionExpired } from "../utils/session.js";
 
 ChartJS.register(
   CategoryScale,
@@ -49,7 +50,7 @@ const chartOptions = {
   plugins: { legend: { position: "bottom" } },
 };
 
-export default function Reports({ familyId, token, refreshKey }) {
+export default function Reports({ familyId, token, refreshKey, onSessionExpired }) {
   const [month, setMonth] = useState(monthParam(new Date()));
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +67,9 @@ export default function Reports({ familyId, token, refreshKey }) {
         if (!cancelled) setReport(r);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message);
+        if (cancelled) return;
+        if (isSessionExpired(err)) onSessionExpired?.();
+        else setError(err.message);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -82,7 +85,8 @@ export default function Reports({ familyId, token, refreshKey }) {
     try {
       await downloadMonthlyCsv(familyId, month, token);
     } catch (err) {
-      setDownloadError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setDownloadError(err.message);
     } finally {
       setDownloading(false);
     }
