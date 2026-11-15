@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchSummary } from "../api.js";
 import { formatMoney, monthParam, shiftMonth } from "../utils/expenseFilters.js";
+import { isSessionExpired } from "../utils/session.js";
 
 function monthLabel(month) {
   const [year, mon] = month.split("-").map(Number);
@@ -10,7 +11,7 @@ function monthLabel(month) {
   });
 }
 
-export default function Dashboard({ familyId, token, refreshKey }) {
+export default function Dashboard({ familyId, token, refreshKey, onSessionExpired }) {
   const [month, setMonth] = useState(monthParam(new Date()));
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,9 @@ export default function Dashboard({ familyId, token, refreshKey }) {
         if (!cancelled) setSummary(s);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message);
+        if (cancelled) return;
+        if (isSessionExpired(err)) onSessionExpired?.();
+        else setError(err.message);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

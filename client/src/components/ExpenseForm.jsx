@@ -6,8 +6,9 @@ import {
   todayInputValue,
   validateExpenseForm,
 } from "../utils/expenseFilters.js";
+import { isSessionExpired } from "../utils/session.js";
 
-export default function ExpenseForm({ familyId, token, initial, onSaved, onCancel }) {
+export default function ExpenseForm({ familyId, token, initial, onSaved, onCancel, onSessionExpired }) {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [date, setDate] = useState(todayInputValue());
@@ -57,7 +58,8 @@ export default function ExpenseForm({ familyId, token, initial, onSaved, onCance
       }
       onSaved();
     } catch (err) {
-      setServerError(err.message);
+      if (isSessionExpired(err)) onSessionExpired?.();
+      else setServerError(err.message);
     } finally {
       setSaving(false);
     }
